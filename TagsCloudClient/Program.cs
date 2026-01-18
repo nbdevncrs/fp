@@ -1,5 +1,6 @@
 using System.Drawing;
 using TagsCloudClient.DI;
+using TagsCloudCore.Infrastructure;
 using TagsCloudCore.Visualization;
 
 namespace TagsCloudClient;
@@ -10,14 +11,14 @@ internal static class Program
     {
         Generate("input_firstsize.txt", "cloud_firstsize.png", 20,
             textColor: Color.BlueViolet,
-            backgroundColor: Color.White, 
+            backgroundColor: Color.White,
             fontFamily: "Segoe UI");
 
         Generate("input_secondsize.txt", "cloud_secondsize.png", 20,
             textColor: Color.Red,
             backgroundColor: Color.Black,
             imageSize: new Size(1920, 1080)
-            );
+        );
 
         Generate("input_thirdsize.txt", "cloud_thirdsize.png", 20);
         Generate("input_fourthsize.txt", "cloud_fourthsize.png", 20);
@@ -49,8 +50,16 @@ internal static class Program
         using var scope = new TagsCloudScope(module);
 
         var generator = scope.GetGenerator();
-        var layout = generator.GenerateLayout().ToArray();
 
-        CloudVisualizer.SaveLayoutToFile(outputPath, layout, fontFamily, backgroundColor, textColor, imageSize);
+        generator.GenerateLayout()
+            .Then(layout =>
+                CloudVisualizer.SaveLayoutToFile(
+                    outputPath,
+                    layout,
+                    fontFamily,
+                    backgroundColor,
+                    textColor,
+                    imageSize))
+            .OnFail(Console.WriteLine);
     }
 }

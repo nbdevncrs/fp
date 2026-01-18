@@ -1,4 +1,6 @@
 using System.Drawing;
+using TagsCloudCore.DTO;
+using TagsCloudCore.Infrastructure;
 using TagsCloudCore.Layout.Abstractions;
 using TagsCloudCore.Text.Abstractions;
 
@@ -12,22 +14,45 @@ public sealed class WordsLayoutGenerator(
     ICloudLayouter layouter)
     : IWordsLayoutGenerator
 {
-    public IEnumerable<(string word, Rectangle rect, int fontSize)> GenerateLayout()
+    public Result<IReadOnlyList<LayoutItem>> GenerateLayout()
     {
-        var words = provider.GetWords();
-        var processed = preprocessor.ProcessWords(words);
-        var frequencies = analyzer.FindFrequencies(processed).OrderByDescending(f => f.Value).ToList();
-        var maxFrequency = frequencies[0].Value;
+        return provider.GetWords()
+            .Then(preprocessor.ProcessWords)
+            .Then(analyzer.FindFrequencies)
+            .Then(BuildLayout)
+            .RefineError("Failed to generate words layout");
+    }
 
-
-        foreach (var (word, frequency) in frequencies)
+    private Result<IReadOnlyList<LayoutItem>> BuildLayout(
+        IReadOnlyDictionary<string, int> frequencies)
+    {
+        return ResultFactory.Of(IReadOnlyList<LayoutItem> () =>
         {
-            var fontSize = sizer.GetFontSize(word, frequency, maxFrequency);
-            var size = EstimateSize(word, fontSize);
-            var rect = layouter.PutNextRectangle(size);
+            var result = new List<LayoutItem>();
 
-            yield return (word, rect, fontSize);
-        }
+            var ordered = frequencies
+                .OrderByDescending(f => f.Value)
+                .ToList();
+
+            if (ordered.Count == 0)
+                return result;
+
+            var maxFrequency = ordered[0].Value;
+
+            foreach (var (word, frequency) in ordered)
+            {
+                var fontSize = sizer.GetFontSize(word, frequency, maxFrequency);
+
+                var size = EstimateSize(word, fontSize);
+
+                var rect = layouter.PutNextRectangle(size);
+
+                result.Add(new LayoutItem(word, rect, fontSize));
+            }
+
+            return result;
+
+        }, "Layout building failed");
     }
 
     private static Size EstimateSize(string word, int fontSize)
@@ -37,7 +62,9 @@ public sealed class WordsLayoutGenerator(
         using var font = new Font("Arial", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
 
         var sizeF = graphics.MeasureString(word, font);
-        
-        return new Size((int)Math.Ceiling(sizeF.Width), (int)Math.Ceiling(sizeF.Height));
+
+        return new Size(
+            (int)Math.Ceiling(sizeF.Width),
+            (int)Math.Ceiling(sizeF.Height));
     }
 }

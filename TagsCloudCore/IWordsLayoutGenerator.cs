@@ -1,8 +1,9 @@
-using System.Drawing;
+using TagsCloudCore.DTO;
+using TagsCloudCore.Infrastructure;
 
 namespace TagsCloudCore;
 
 public interface IWordsLayoutGenerator
 {
-    IEnumerable<(string word, Rectangle rect, int fontSize)> GenerateLayout();
+    Result<IReadOnlyList<LayoutItem>> GenerateLayout();
 }

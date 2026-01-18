@@ -2,15 +2,9 @@ using TagsCloudCore.Text.Abstractions;
 
 namespace TagsCloudCore.Text.Implementations.WordsPreprocessing;
 
-public sealed class WordsPreprocessor : IWordsPreprocessor
+public sealed class WordsPreprocessor(IEnumerable<IWordsFilter> filters) : IWordsPreprocessor
 {
-    private readonly IReadOnlyList<IWordsFilter> filters;
-
-    public WordsPreprocessor(IEnumerable<IWordsFilter> filters)
-    {
-        ArgumentNullException.ThrowIfNull(filters);
-        this.filters = new List<IWordsFilter>(filters);
-    }
+    private readonly IReadOnlyList<IWordsFilter> filters = new List<IWordsFilter>(filters);
 
     public IEnumerable<string> ProcessWords(IEnumerable<string> words)
     {

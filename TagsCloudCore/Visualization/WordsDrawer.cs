@@ -1,4 +1,5 @@
 using System.Drawing;
+using TagsCloudCore.DTO;
 
 namespace TagsCloudCore.Visualization;
 
@@ -6,7 +7,7 @@ public static class WordsDrawer
 {
     public static void DrawWords(
         Graphics graphics,
-        IEnumerable<(string word, Rectangle rect, int fontSize)> elements,
+        IReadOnlyList<LayoutItem> elements,
         int minX,
         int minY,
         int padding,
@@ -49,12 +50,14 @@ public static class WordsDrawer
         Color? textColor,
         string fontFamily)
     {
+        if (!FontFamily.Families.Any(f => f.Name == fontFamily))
+            throw new InvalidOperationException($"Font '{fontFamily}' not found");
+
         var shifted = rect with
         {
             X = rect.Left - minX + padding + offsetX,
             Y = rect.Top - minY + padding + offsetY
         };
-
 
         using var font = new Font(fontFamily, fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
 

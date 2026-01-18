@@ -11,6 +11,9 @@ public sealed class DocxWordsProvider(string filePath) : IWordsProvider
     {
         return ResultFactory.Of<IEnumerable<string>>(() =>
         {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"Input file not found: {filePath}");
+            
             var words = new List<string>();
 
             using var document = WordprocessingDocument.Open(filePath, false);

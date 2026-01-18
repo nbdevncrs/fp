@@ -9,6 +9,9 @@ public sealed class TxtWordsProvider(string filePath) : IWordsProvider
     {
         return ResultFactory.Of<IEnumerable<string>>(() =>
         {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"Input file not found: {filePath}");
+            
             var words = new List<string>();
 
             using var reader = new StreamReader(filePath);

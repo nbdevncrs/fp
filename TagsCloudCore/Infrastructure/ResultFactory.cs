@@ -22,7 +22,7 @@ public static class ResultFactory
         return new Result<T>(e);
     }
 
-    public static Result<T> Of<T>(Func<T> f, string error = null)
+    public static Result<T> Of<T>(Func<T> f, string? error = null)
     {
         try
         {
@@ -30,11 +30,11 @@ public static class ResultFactory
         }
         catch (Exception e)
         {
-            return Fail<T>(error ?? e.Message);
+            return Fail<T>(error == null ? e.Message : error + ". " + e.Message);
         }
     }
 
-    public static Result<None> OfAction(Action f, string error = null)
+    public static Result<None> OfAction(Action f, string? error = null)
     {
         try
         {
@@ -43,7 +43,7 @@ public static class ResultFactory
         }
         catch (Exception e)
         {
-            return Fail<None>(error ?? e.Message);
+            return Fail<None>(error == null ? e.Message : error + ". " + e.Message);
         }
     }
 }

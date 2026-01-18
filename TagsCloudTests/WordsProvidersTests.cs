@@ -24,7 +24,9 @@ public class WordsProvidersTests
 
         var provider = new TxtWordsProvider(tempFile);
 
-        var words = provider.GetWords().ToArray();
+        var words = provider.GetWords()
+            .GetValueOrThrow()
+            .ToArray();
 
         words.Should().Equal(
             "данные",
@@ -45,7 +47,9 @@ public class WordsProvidersTests
 
         var provider = new TxtWordsProvider(tempFile);
 
-        var words = provider.GetWords().ToArray();
+        var words = provider.GetWords()
+            .GetValueOrThrow()
+            .ToArray();
 
         words.Should().ContainSingle()
             .Which.Should().Be("слово");
@@ -74,7 +78,9 @@ public class WordsProvidersTests
 
         var provider = new DocxWordsProvider(tempFile);
 
-        var words = provider.GetWords().ToArray();
+        var words = provider.GetWords()
+            .GetValueOrThrow()
+            .ToArray();
 
         words.Should().Equal(
             "данные",
@@ -101,7 +107,9 @@ public class WordsProvidersTests
 
         var provider = new DocxWordsProvider(tempFile);
 
-        var words = provider.GetWords().ToArray();
+        var words = provider.GetWords()
+            .GetValueOrThrow()
+            .ToArray();
 
         words.Should().BeEmpty();
 

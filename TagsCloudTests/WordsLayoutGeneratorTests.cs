@@ -2,6 +2,7 @@ using System.Drawing;
 using FakeItEasy;
 using FluentAssertions;
 using TagsCloudCore;
+using TagsCloudCore.Infrastructure;
 using TagsCloudCore.Layout.Abstractions;
 using TagsCloudCore.Text.Abstractions;
 using TagsCloudCore.Text.Implementations.WordsFrequencyAnalyzing;
@@ -16,42 +17,43 @@ public class WordsLayoutGeneratorTests
     {
         var provider = A.Fake<IWordsProvider>();
         A.CallTo(() => provider.GetWords())
-            .Returns(["apple", "banana", "apple"]);
+            .Returns(ResultFactory.Ok<IEnumerable<string>>(["apple", "banana", "apple"]));
 
         var generator = CreateGenerator(provider);
 
-        var result = generator.GenerateLayout().ToList();
+        var result = generator.GenerateLayout().GetValueOrThrow();
 
         result.Should().HaveCount(2);
-        result.Select(r => r.word).Should().BeEquivalentTo("apple", "banana");
+        result.Select(r => r.Word).Should().BeEquivalentTo("apple", "banana");
     }
 
     [Test]
     public void GenerateLayout_ShouldOrderWordsByFrequencyDescending()
     {
         var provider = A.Fake<IWordsProvider>();
-        A.CallTo(() => provider.GetWords()).Returns(["cat", "dog", "cat", "cat", "dog", "mouse"]);
+        A.CallTo(() => provider.GetWords())
+            .Returns(ResultFactory.Ok<IEnumerable<string>>(["cat", "dog", "cat", "cat", "dog", "mouse"]));
 
         var generator = CreateGenerator(provider);
 
-        var result = generator.GenerateLayout().ToList();
+        var result = generator.GenerateLayout().GetValueOrThrow();
 
-        result.Select(r => r.word).Should().ContainInOrder("cat", "dog", "mouse");
+        result.Select(r => r.Word).Should().ContainInOrder("cat", "dog", "mouse");
     }
 
     [Test]
     public void GenerateLayout_ShouldPassCorrectFrequenciesToSizer()
     {
         var provider = A.Fake<IWordsProvider>();
-        A.CallTo(() => provider.GetWords()).Returns(["a", "a", "b"]);
+        A.CallTo(() => provider.GetWords())
+            .Returns(ResultFactory.Ok<IEnumerable<string>>(["a", "a", "b"]));
 
         var sizer = A.Fake<IWordsFontSizer>();
-
         A.CallTo(() => sizer.GetFontSize(A<string>._, A<int>._, A<int>._)).Returns(10);
 
         var generator = CreateGenerator(provider, sizer: sizer);
 
-        generator.GenerateLayout().ToList();
+        generator.GenerateLayout().GetValueOrThrow();
 
         A.CallTo(() => sizer.GetFontSize("a", 2, 2)).MustHaveHappenedOnceExactly();
 
@@ -63,15 +65,14 @@ public class WordsLayoutGeneratorTests
     {
         var provider = A.Fake<IWordsProvider>();
         A.CallTo(() => provider.GetWords())
-            .Returns(["x", "y", "z"]);
+            .Returns(ResultFactory.Ok<IEnumerable<string>>(["x", "y", "z"]));
 
         var layouter = A.Fake<ICloudLayouter>();
-
         A.CallTo(() => layouter.PutNextRectangle(A<Size>._)).Returns(new Rectangle(0, 0, 10, 10));
 
         var generator = CreateGenerator(provider, layouter: layouter);
 
-        generator.GenerateLayout().ToList();
+        generator.GenerateLayout().GetValueOrThrow();
 
         A.CallTo(() => layouter.PutNextRectangle(A<Size>._)).MustHaveHappened(3, Times.Exactly);
     }
@@ -80,16 +81,16 @@ public class WordsLayoutGeneratorTests
     public void GenerateLayout_ShouldReturnFontSizeProvidedBySizer()
     {
         var provider = A.Fake<IWordsProvider>();
-        A.CallTo(() => provider.GetWords()).Returns(["hello"]);
+        A.CallTo(() => provider.GetWords()).Returns(ResultFactory.Ok<IEnumerable<string>>(["hello"]));
 
         var sizer = A.Fake<IWordsFontSizer>();
         A.CallTo(() => sizer.GetFontSize(A<string>._, A<int>._, A<int>._)).Returns(42);
 
         var generator = CreateGenerator(provider, sizer: sizer);
 
-        var result = generator.GenerateLayout().Single();
+        var result = generator.GenerateLayout().GetValueOrThrow().Single();
 
-        result.fontSize.Should().Be(42);
+        result.FontSize.Should().Be(42);
     }
 
     private static WordsLayoutGenerator CreateGenerator(
@@ -113,6 +114,7 @@ public class WordsLayoutGeneratorTests
     {
         var sizer = A.Fake<IWordsFontSizer>();
         A.CallTo(() => sizer.GetFontSize(A<string>._, A<int>._, A<int>._)).Returns(10);
+
         return sizer;
     }
 
@@ -120,6 +122,7 @@ public class WordsLayoutGeneratorTests
     {
         var layouter = A.Fake<ICloudLayouter>();
         A.CallTo(() => layouter.PutNextRectangle(A<Size>._)).Returns(new Rectangle(0, 0, 10, 10));
+
         return layouter;
     }
 }
